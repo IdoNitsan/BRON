@@ -1,6 +1,7 @@
 version: "3.5"
 services:
   brondb:
+    platform: linux/x86_64
     container_name: brondb
     image: arangodb:3.8.1
     environment:
@@ -13,6 +14,7 @@ services:
       - brondb_data_container:/var/lib/arangodb3
       - brondb_apps_data_container:/var/lib/arangodb3-apps
   bootstrap:
+    platform: linux/x86_64
     container_name: bootstrap
     build: .
     image: bronbootstrap
