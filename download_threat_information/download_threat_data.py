@@ -9,6 +9,7 @@ import sys
 import logging
 
 import requests
+import time
 
 
 # TODO how to check if there are updates, or different URLs
@@ -86,7 +87,7 @@ def _download_attack():
 
 
 def _download_capec_xml():
-    response = requests.get(CAPEC_XML_URL, stream=True)
+    response = requests.get(CAPEC_XML_URL, stream=True, verify=False)
     file_path = os.path.join(OUTPUT_FOLDER, THREAT_DATA_TYPES["CAPEC_XML"])
     with open(file_path, "wb") as fd:
         for chunk in response.iter_content(chunk_size=128):
@@ -98,7 +99,7 @@ def _download_capec_xml():
 
 
 def _download_cwe_xml():
-    response = requests.get(CWE_XML_URL, stream=True)
+    response = requests.get(CWE_XML_URL, stream=True, verify=False)
     file_path = os.path.join(OUTPUT_FOLDER, THREAT_DATA_TYPES["CWE_XML"])
     with open(file_path, "wb") as fd:
         for chunk in response.iter_content(chunk_size=128):
@@ -114,7 +115,18 @@ def _download_cve(cve_years):
     for year in cve_years:
         # Download CVE data for each year
         cve_url = os.path.join(CVE_BASE_URL, f"nvdcve-1.1-{year}.json.gz")
-        response = requests.get(cve_url, stream=True)
+        max_retries = 5
+        retry_count = 0
+        while retry_count < max_retries:
+            try:
+                response = requests.get(cve_url, stream=True, verify=False)
+                if response.status_code == 200:
+                    logging.info(f"Downloaded CVE data for {year} successfully")
+                    break
+            except:
+                logging.info(f"Failed to download CVE data for {year}. Retrying...")
+                retry_count += 1
+                time.sleep(5)
         year_file_path = os.path.join(OUTPUT_FOLDER, f"raw_CVE_{year}.json.gz")
         with open(year_file_path, "wb") as fd:
             for chunk in response.iter_content(chunk_size=128):
